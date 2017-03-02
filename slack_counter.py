@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
+from os import environ
 
 from airflow import DAG
 from airflow.contrib.hooks import VerticaHook
-from airflow.operators.slack_operator import SlackAPIPostOperator
 
 default_args = {
     'owner': 'alfadata',
@@ -28,8 +28,10 @@ def vertica_counter(**kwargs):
     return counter
 
 
+slack_token = environ.get('SLACK_TOKEN')
+
 message = 'TABLE_NAME содержит {} записи.'.format(vertica_counter())
 
 slack_monitoring = SlackAPIPostOperator(dag=dag, task_id='slack_monitoring',
-                                        token="TOKEN",
+                                        token=slack_token,
                                         channel="#airflow", text=message)
