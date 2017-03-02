@@ -12,12 +12,10 @@ default_args = {
     'email': ['airflow@airflow.com'],
     'email_on_failure': False,
     'email_on_retry': False,
-    # 'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
 
-dag = DAG("vertica_monitoring",
-          default_args=default_args)
+dag = DAG("vertica_monitoring", default_args=default_args, schedule_interval='05 * * * *')
 
 slack_token = environ.get('SLACK_TOKEN')
 
@@ -25,13 +23,16 @@ slack_token = environ.get('SLACK_TOKEN')
 def get_event_status(**kwargs):
     cur = PostgresHook('airflow_db').get_cursor()
 
-    sql = '''SELECT DISTINCT
-              task_id,
+    sql = """SELECT
+              to_Char(dttm, 'HH24:MI:SS'),
               dag_id,
-              to_Char(dttm, 'HH24:MI:SS')
+              task_id,
+              event,
+              execution_date
             FROM public.log
-            WHERE owner = 'airflow' AND event = 'failed' AND EXECUTION_DATE = current_date
-'''
+            WHERE owner = 'airflow' AND event = 'failed'
+              AND EXECUTION_DATE = current_date
+              AND dttm >= current_date - INTERVAL '5 minutes'"""
 
     cur.execute(sql)
     result = cur.fetchall()
@@ -49,5 +50,3 @@ if result:
         slack_monitoring = SlackAPIPostOperator(dag=dag, task_id='slack_monitoring',
                                                 token=slack_token,
                                                 channel="#airflow", text=message)
-else:
-    raise SystemExit
