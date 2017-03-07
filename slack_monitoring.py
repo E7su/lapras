@@ -6,7 +6,7 @@ from airflow.hooks import PostgresHook
 from airflow.operators.slack_operator import SlackAPIPostOperator
 
 default_args = {
-    'owner': 'alfadata',
+    'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime.today(),
     'email': ['airflow@airflow.com'],
@@ -24,15 +24,13 @@ def get_event_status(**kwargs):
     cur = PostgresHook('airflow_db').get_cursor()
 
     sql = """SELECT
-              to_Char(dttm, 'HH24:MI:SS'),
-              dag_id,
               task_id,
-              event,
-              execution_date
-            FROM public.log
-            WHERE owner = 'airflow' AND event = 'failed'
-              AND EXECUTION_DATE = current_date
-              AND dttm >= current_date - INTERVAL '5 minutes'"""
+              dag_id,
+              to_Char(dttm, 'HH24:MI:SS')
+             FROM public.log
+             WHERE owner = 'airflow' 
+                   AND event = 'failed'
+                   AND dttm >= current_date - interval '5 minutes'"""
 
     cur.execute(sql)
     result = cur.fetchall()
@@ -40,6 +38,8 @@ def get_event_status(**kwargs):
 
 
 result = get_event_status()
+
+
 if result:
     message = ''
     for strings in result:
@@ -47,6 +47,6 @@ if result:
         msg = "Task '{}' in DAG '{}' was failed at {} today.".format(task_name, dag_name, time)
         message = message + '\n' + msg
 
-        slack_monitoring = SlackAPIPostOperator(dag=dag, task_id='slack_monitoring',
-                                                token=slack_token,
-                                                channel="#airflow", text=message)
+    slack_monitoring = SlackAPIPostOperator(dag=dag, task_id='slack_monitoring',
+                                            token=slack_token,
+                                            channel="#airflow", text=message)
