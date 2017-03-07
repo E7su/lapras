@@ -3,6 +3,7 @@ from os import environ
 
 from airflow import DAG
 from airflow.contrib.hooks import VerticaHook
+from airflow.operators.slack_operator import SlackAPIPostOperator
 
 default_args = {
     'owner': 'alfadata',
