@@ -15,7 +15,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-dag = DAG("vertica_monitoring", default_args=default_args, schedule_interval='05 * * * *')
+dag = DAG("scheduler_monitoring", default_args=default_args, schedule_interval='05 * * * *')
 
 slack_token = environ.get('SLACK_TOKEN')
 
