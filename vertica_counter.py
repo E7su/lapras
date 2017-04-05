@@ -16,7 +16,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-dag = DAG("vertica_monitoring",
+dag = DAG("vertica_counter",
           default_args=default_args)
 
 
